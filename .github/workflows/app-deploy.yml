@@ -120,8 +120,8 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     outputs:
-      image-tag: ${{ steps.meta.outputs.tags }}
       image-digest: ${{ steps.build.outputs.digest }}
+      build-success: ${{ steps.build.outcome == 'success' }}
     
     steps:
     - name: Checkout Code
@@ -163,21 +163,22 @@ jobs:
         cache-to: type=gha,mode=max
         platforms: linux/amd64
     
-    - name: Generate SBOM
-      uses: anchore/sbom-action@v0
-      continue-on-error: true
-      with:
-        image: ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        format: spdx-json
-        output-file: sbom.spdx.json
+    # SBOM generation disabled due to syft compatibility issues
+    # - name: Generate SBOM
+    #   uses: anchore/sbom-action@v0
+    #   continue-on-error: true
+    #   with:
+    #     image: ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+    #     format: spdx-json
+    #     output-file: sbom.spdx.json
     
-    - name: Upload SBOM
-      uses: actions/upload-artifact@v4
-      continue-on-error: true
-      with:
-        name: sbom
-        path: sbom.spdx.json
-        retention-days: 30
+    # - name: Upload SBOM
+    #   uses: actions/upload-artifact@v4
+    #   continue-on-error: true
+    #   with:
+    #     name: sbom
+    #     path: sbom.spdx.json
+    #     retention-days: 30
 
   deploy:
     name: Deploy to AKS
@@ -264,7 +265,20 @@ jobs:
         echo "Performing health check..."
         sleep 30  # Wait for pods to be ready
         
-        # Get service endpoint
+        # Check service type first
+        SERVICE_TYPE=$(kubectl get service devops-microservice-service -n ${{ env.NAMESPACE }} -o jsonpath='{.spec.type}')
+        echo "Service type: $SERVICE_TYPE"
+        
+        if [[ "$SERVICE_TYPE" == "ClusterIP" ]]; then
+          echo "Service is ClusterIP, using internal health check"
+          # Wait for pods to be ready
+          kubectl wait --for=condition=ready pod -l app=devops-microservice -n ${{ env.NAMESPACE }} --timeout=300s
+          echo "✅ Pods are ready, health check passed"
+          echo "health-check-success=true" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        # Only try to get external IP for LoadBalancer services
         EXTERNAL_IP=""
         for i in {1..20}; do
           EXTERNAL_IP=$(kubectl get service devops-microservice-service -n ${{ env.NAMESPACE }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
@@ -276,9 +290,9 @@ jobs:
         done
         
         if [[ -z "$EXTERNAL_IP" ]]; then
-          echo "Service is ClusterIP, skipping external IP check"
-          echo "health-check-success=true" >> $GITHUB_OUTPUT
-          exit 0
+          echo "Failed to get external IP for LoadBalancer service"
+          echo "health-check-success=false" >> $GITHUB_OUTPUT
+          exit 1
         fi
         
         # Test health endpoint
