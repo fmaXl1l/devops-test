@@ -60,12 +60,7 @@ jobs:
     - name: Terraform Init
       id: init
       working-directory: ${{ env.WORKING_DIR }}
-      run: |
-        terraform init \
-          -backend-config="resource_group_name=${{ secrets.TF_STATE_RESOURCE_GROUP_NAME || 'terraform-state-rg' }}" \
-          -backend-config="storage_account_name=${{ secrets.TF_STATE_STORAGE_ACCOUNT_NAME || 'terraformstatedevops' }}" \
-          -backend-config="container_name=${{ secrets.TF_STATE_CONTAINER_NAME || 'tfstate' }}" \
-          -backend-config="key=devops-microservice.tfstate"
+      run: terraform init
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -165,12 +160,7 @@ jobs:
     
     - name: Terraform Init
       working-directory: ${{ env.WORKING_DIR }}
-      run: |
-        terraform init \
-          -backend-config="resource_group_name=${{ secrets.TF_STATE_RESOURCE_GROUP_NAME || 'terraform-state-rg' }}" \
-          -backend-config="storage_account_name=${{ secrets.TF_STATE_STORAGE_ACCOUNT_NAME || 'terraformstatedevops' }}" \
-          -backend-config="container_name=${{ secrets.TF_STATE_CONTAINER_NAME || 'tfstate' }}" \
-          -backend-config="key=devops-microservice.tfstate"
+      run: terraform init
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -263,12 +253,7 @@ jobs:
     
     - name: Terraform Init
       working-directory: ${{ env.WORKING_DIR }}
-      run: |
-        terraform init \
-          -backend-config="resource_group_name=${{ secrets.TF_STATE_RESOURCE_GROUP_NAME || 'terraform-state-rg' }}" \
-          -backend-config="storage_account_name=${{ secrets.TF_STATE_STORAGE_ACCOUNT_NAME || 'terraformstatedevops' }}" \
-          -backend-config="container_name=${{ secrets.TF_STATE_CONTAINER_NAME || 'tfstate' }}" \
-          -backend-config="key=devops-microservice.tfstate"
+      run: terraform init
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
