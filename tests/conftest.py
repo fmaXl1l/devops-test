@@ -36,7 +36,7 @@ def valid_jwt_payload():
     return {
         "transaction_id": str(uuid.uuid4()),
         "exp": datetime.now(timezone.utc) + timedelta(hours=1),
-        "iat": datetime.now(timezone.utc)
+        "iat": datetime.now(timezone.utc),
     }
 
 
@@ -52,7 +52,7 @@ def expired_jwt_token():
     payload = {
         "transaction_id": str(uuid.uuid4()),
         "exp": datetime.now(timezone.utc) - timedelta(hours=1),  # Expired
-        "iat": datetime.now(timezone.utc) - timedelta(hours=2)
+        "iat": datetime.now(timezone.utc) - timedelta(hours=2),
     }
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm=ALGORITHM)
 
@@ -62,7 +62,7 @@ def jwt_without_transaction_id():
     """Generate a JWT token without transaction_id."""
     payload = {
         "exp": datetime.now(timezone.utc) + timedelta(hours=1),
-        "iat": datetime.now(timezone.utc)
+        "iat": datetime.now(timezone.utc),
     }
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm=ALGORITHM)
 
@@ -80,23 +80,18 @@ def valid_devops_message():
         "message": "This is a test",
         "to": "Juan Perez",
         "from": "Rita Asturia",
-        "timeToLifeSec": 45
+        "timeToLifeSec": 45,
     }
 
 
 @pytest.fixture
 def valid_headers(valid_api_key, valid_jwt_token):
     """Return valid headers for DevOps endpoint."""
-    return {
-        "X-Parse-REST-API-Key": valid_api_key,
-        "X-JWT-KWY": valid_jwt_token
-    }
+    return {"X-Parse-REST-API-Key": valid_api_key, "X-JWT-KWY": valid_jwt_token}
 
 
 @pytest.fixture
 def mock_env_vars():
     """Mock environment variables."""
-    with patch.dict(os.environ, {
-        "JWT_SECRET_KEY": "test-secret-key-for-testing"
-    }):
+    with patch.dict(os.environ, {"JWT_SECRET_KEY": "test-secret-key-for-testing"}):
         yield
