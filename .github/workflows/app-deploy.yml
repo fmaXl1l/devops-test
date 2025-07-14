@@ -167,7 +167,7 @@ jobs:
       uses: anchore/sbom-action@v0
       continue-on-error: true
       with:
-        image: ${{ steps.meta.outputs.tags }}
+        image: ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
         format: spdx-json
         output-file: sbom.spdx.json
     
@@ -198,8 +198,8 @@ jobs:
     - name: Configure kubectl
       run: |
         az aks get-credentials \
-          --resource-group ${{ secrets.RESOURCE_GROUP_NAME }} \
-          --name ${{ secrets.AKS_CLUSTER_NAME }} \
+          --resource-group ${{ secrets.RESOURCE_GROUP_NAME || 'devops-microservice-dev-rg' }} \
+          --name ${{ secrets.AKS_CLUSTER_NAME || 'devops-microservice-dev-aks' }} \
           --overwrite-existing
     
     - name: Verify AKS Connection
@@ -333,8 +333,8 @@ jobs:
     - name: Configure kubectl
       run: |
         az aks get-credentials \
-          --resource-group ${{ secrets.RESOURCE_GROUP_NAME }} \
-          --name ${{ secrets.AKS_CLUSTER_NAME }} \
+          --resource-group ${{ secrets.RESOURCE_GROUP_NAME || 'devops-microservice-dev-rg' }} \
+          --name ${{ secrets.AKS_CLUSTER_NAME || 'devops-microservice-dev-aks' }} \
           --overwrite-existing
     
     - name: Rollback Deployment
