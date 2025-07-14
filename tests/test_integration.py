@@ -1,7 +1,6 @@
 """Integration tests for the DevOps microservice endpoints."""
 
 
-
 class TestGenerateTokenEndpoint:
     """Test the /generate-token endpoint."""
 

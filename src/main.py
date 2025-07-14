@@ -61,7 +61,7 @@ class TokenResponse(BaseModel):
     response_model=DevOpsResponse,
     summary="Send DevOps message",
     description="Processes a DevOps message with authentication and returns "
-                "a confirmation",
+    "a confirmation",
     responses={
         200: {
             "description": "Message processed successfully",
@@ -103,7 +103,7 @@ async def devops_endpoint(
     response_model=TokenResponse,
     summary="Generate JWT token",
     description="Generates a new JWT token with unique transaction ID for "
-                "authentication",
+    "authentication",
     responses={
         200: {
             "description": "JWT token generated successfully",

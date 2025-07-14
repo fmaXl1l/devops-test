@@ -1,6 +1,5 @@
 """Unit tests for the DevOps microservice components."""
 
-
 import jwt
 import pytest
 from fastapi import HTTPException
