@@ -1,8 +1,9 @@
 """Authentication and validation utilities for the DevOps microservice."""
 
-from fastapi import HTTPException, Header
-import jwt
 import os
+
+import jwt
+from fastapi import Header, HTTPException
 
 # Constants
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "jwt-secret-key-default-value")
@@ -41,7 +42,8 @@ def validate_jwt_token(x_jwt_kwy: str = Header(None, alias="X-JWT-KWY")) -> dict
         dict: Decoded JWT payload containing transaction_id
 
     Raises:
-        HTTPException: If JWT token is missing, invalid, expired, or missing transaction_id
+        HTTPException: If JWT token is missing, invalid, expired, or missing
+            transaction_id
     """
     if not x_jwt_kwy:
         raise HTTPException(status_code=401, detail="JWT token required")

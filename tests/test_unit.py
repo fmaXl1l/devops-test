@@ -1,17 +1,15 @@
 """Unit tests for the DevOps microservice components."""
 
-import pytest
-from datetime import datetime, timezone
+
 import jwt
-import uuid
+import pytest
 from fastapi import HTTPException
 
 from src.auth import (
+    ALGORITHM,
+    JWT_SECRET_KEY,
     validate_api_key,
     validate_jwt_token,
-    JWT_SECRET_KEY,
-    ALGORITHM,
-    API_KEY,
 )
 
 

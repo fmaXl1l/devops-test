@@ -1,10 +1,11 @@
+import os
+import uuid
+from datetime import datetime, timedelta, timezone
+
+import jwt
 from fastapi import FastAPI, Header, Request
 from fastapi.responses import PlainTextResponse
-from datetime import datetime, timedelta, timezone
-import jwt
 from pydantic import BaseModel, Field
-import uuid
-import os
 
 from .auth import validate_api_key, validate_jwt_token
 
@@ -59,7 +60,8 @@ class TokenResponse(BaseModel):
     "/DevOps",
     response_model=DevOpsResponse,
     summary="Send DevOps message",
-    description="Processes a DevOps message with authentication and returns a confirmation",
+    description="Processes a DevOps message with authentication and returns "
+                "a confirmation",
     responses={
         200: {
             "description": "Message processed successfully",
@@ -100,7 +102,8 @@ async def devops_endpoint(
     "/generate-token",
     response_model=TokenResponse,
     summary="Generate JWT token",
-    description="Generates a new JWT token with unique transaction ID for authentication",
+    description="Generates a new JWT token with unique transaction ID for "
+                "authentication",
     responses={
         200: {
             "description": "JWT token generated successfully",
@@ -116,7 +119,8 @@ async def generate_token():
     """
     Generate a new JWT token with unique transaction ID.
 
-    Returns a JWT token that can be used for authenticating requests to /DevOps endpoint.
+    Returns a JWT token that can be used for authenticating requests to
+    /DevOps endpoint.
     The token includes a unique transaction_id and expires in 1 hour.
     """
     transaction_id = str(uuid.uuid4())

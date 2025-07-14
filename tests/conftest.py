@@ -1,15 +1,16 @@
 """Test configuration and fixtures for the DevOps microservice."""
 
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime, timedelta, timezone
-import jwt
-import uuid
 import os
+import uuid
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
+import jwt
+import pytest
+from fastapi.testclient import TestClient
+
+from src.auth import ALGORITHM, API_KEY, JWT_SECRET_KEY
 from src.main import app
-from src.auth import JWT_SECRET_KEY, ALGORITHM, API_KEY
 
 
 @pytest.fixture

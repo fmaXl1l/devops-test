@@ -1,8 +1,5 @@
 """Integration tests for the DevOps microservice endpoints."""
 
-import pytest
-from fastapi.testclient import TestClient
-import json
 
 
 class TestGenerateTokenEndpoint:
