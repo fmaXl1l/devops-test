@@ -12,8 +12,12 @@ terraform {
     }
   }
 
-  # Azure Storage backend configured via CLI parameters
+  # Azure Storage backend for production  
   backend "azurerm" {
+    resource_group_name  = "terraform-state-rg"
+    storage_account_name = "tfstate6b99ba61"
+    container_name       = "tfstate"
+    key                  = "devops-microservice.tfstate"
   }
 }
 
