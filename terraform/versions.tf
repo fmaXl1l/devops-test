@@ -12,9 +12,8 @@ terraform {
     }
   }
 
-  # Local backend for testing
-  backend "local" {
-    path = "terraform.tfstate"
+  # Azure Storage backend configured via CLI parameters
+  backend "azurerm" {
   }
 }
 
