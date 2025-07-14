@@ -2,9 +2,9 @@
 locals {
   resource_group_name = var.resource_group_name != "" ? var.resource_group_name : "${var.project_name}-${var.environment}-rg"
   aks_cluster_name    = var.aks_cluster_name != "" ? var.aks_cluster_name : "${var.project_name}-${var.environment}-aks"
-  acr_name           = var.acr_name != "" ? var.acr_name : replace("${var.project_name}${var.environment}acr", "-", "")
-  apim_name          = var.apim_name != "" ? var.apim_name : "${var.project_name}-${var.environment}-apim"
-  
+  acr_name            = var.acr_name != "" ? var.acr_name : replace("${var.project_name}${var.environment}acr", "-", "")
+  apim_name           = var.apim_name != "" ? var.apim_name : "${var.project_name}-${var.environment}-apim"
+
   common_tags = merge(var.tags, {
     Environment = var.environment
   })
@@ -65,7 +65,7 @@ resource "azurerm_kubernetes_cluster" "main" {
     node_count     = var.aks_node_count
     vm_size        = var.aks_node_vm_size
     vnet_subnet_id = azurerm_subnet.aks.id
-    
+
     upgrade_settings {
       max_surge = "10%"
     }
@@ -78,10 +78,10 @@ resource "azurerm_kubernetes_cluster" "main" {
 
   # Network configuration
   network_profile {
-    network_plugin    = "azure"
-    network_policy    = "azure"
-    dns_service_ip    = "10.2.0.10"
-    service_cidr      = "10.2.0.0/24"
+    network_plugin = "azure"
+    network_policy = "azure"
+    dns_service_ip = "10.2.0.10"
+    service_cidr   = "10.2.0.0/24"
   }
 
   # Enable Azure Monitor for containers
@@ -112,23 +112,12 @@ resource "azurerm_log_analytics_workspace" "main" {
 resource "azurerm_role_assignment" "aks_acr_pull" {
   principal_id                     = azurerm_kubernetes_cluster.main.kubelet_identity[0].object_id
   role_definition_name             = "AcrPull"
-  scope                           = azurerm_container_registry.main.id
+  scope                            = azurerm_container_registry.main.id
   skip_service_principal_aad_check = true
 }
 
-# Service Principal for AKS (additional to managed identity)
-resource "azuread_application" "aks_sp" {
-  display_name = "${var.project_name}-${var.environment}-aks-sp"
-}
-
-resource "azuread_service_principal" "aks_sp" {
-  client_id = azuread_application.aks_sp.client_id
-}
-
-resource "azuread_service_principal_password" "aks_sp" {
-  service_principal_id = azuread_service_principal.aks_sp.object_id
-  end_date            = timeadd(timestamp(), "8760h") # 1 year from now
-}
+# Note: AKS uses System-Assigned Managed Identity (configured above)
+# No additional Service Principal needed for AKS authentication
 
 # API Management Service
 resource "azurerm_api_management" "main" {
@@ -137,7 +126,7 @@ resource "azurerm_api_management" "main" {
   resource_group_name = azurerm_resource_group.main.name
   publisher_name      = var.apim_publisher_name
   publisher_email     = var.apim_publisher_email
-  sku_name           = "${var.apim_sku}_1"
+  sku_name            = "${var.apim_sku}_1"
 
   # Sin configuración de VNet para simplificar testing
   virtual_network_type = "None"

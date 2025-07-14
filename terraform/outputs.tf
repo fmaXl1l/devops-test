@@ -99,18 +99,8 @@ output "apim_scm_url" {
   value       = azurerm_api_management.main.scm_url
 }
 
-# Service Principal outputs
-output "service_principal_application_id" {
-  description = "Application ID of the service principal"
-  value       = azuread_application.aks_sp.client_id
-  sensitive   = true
-}
-
-output "service_principal_object_id" {
-  description = "Object ID of the service principal"
-  value       = azuread_service_principal.aks_sp.object_id
-  sensitive   = true
-}
+# Note: AKS uses System-Assigned Managed Identity
+# Service Principal outputs removed as they are no longer needed
 
 # Network outputs
 output "vnet_id" {
@@ -143,10 +133,10 @@ output "log_analytics_workspace_name" {
 output "deployment_summary" {
   description = "Summary of deployed resources for easy reference"
   value = {
-    resource_group      = azurerm_resource_group.main.name
-    aks_cluster        = azurerm_kubernetes_cluster.main.name
-    acr_login_server   = azurerm_container_registry.main.login_server
-    apim_gateway_url   = azurerm_api_management.main.gateway_url
-    location           = azurerm_resource_group.main.location
+    resource_group   = azurerm_resource_group.main.name
+    aks_cluster      = azurerm_kubernetes_cluster.main.name
+    acr_login_server = azurerm_container_registry.main.login_server
+    apim_gateway_url = azurerm_api_management.main.gateway_url
+    location         = azurerm_resource_group.main.location
   }
 }
