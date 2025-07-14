@@ -1,0 +1,37 @@
+# Project Configuration
+project_name = "devops-microservice"
+environment  = "dev"
+location     = "East US"
+
+# Resource Naming (leave empty to use auto-generated names)
+resource_group_name = ""
+aks_cluster_name    = ""
+acr_name           = ""
+apim_name          = ""
+
+# AKS Configuration
+aks_node_count         = 2
+aks_node_vm_size      = "Standard_B2s"
+aks_kubernetes_version = "1.28.5"
+
+# ACR Configuration
+acr_sku = "Basic"
+
+# API Management Configuration
+apim_sku             = "Developer"
+apim_publisher_name  = "DevOps Team"
+apim_publisher_email = "admin@devops.local"
+
+# Network Configuration
+vnet_address_space         = ["10.0.0.0/16"]
+aks_subnet_address_prefix  = "10.0.1.0/24"
+apim_subnet_address_prefix = "10.0.2.0/24"
+
+# Tags
+tags = {
+  Project     = "DevOps Microservice"
+  Environment = "dev"
+  ManagedBy   = "Terraform"
+  Owner       = "DevOps Team"
+  CostCenter  = "IT"
+}

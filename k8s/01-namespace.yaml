@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: devops-microservice
+  labels:
+    name: devops-microservice
+    environment: production
+    managed-by: kubernetes
+  annotations:
+    description: "Namespace for DevOps microservice application"

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: devops-microservice-service
+  namespace: devops-microservice
+  labels:
+    app: devops-microservice
+    component: service
+  annotations:
+    # Service is now internal - APIM handles external access
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  selector:
+    app: devops-microservice
+    component: api
+  sessionAffinity: None

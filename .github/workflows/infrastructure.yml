@@ -1,0 +1,290 @@
+name: Infrastructure Deployment
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/infrastructure.yml'
+  
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/infrastructure.yml'
+  
+  workflow_dispatch:
+    inputs:
+      destroy:
+        description: 'Destroy infrastructure'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  TF_VERSION: latest
+  WORKING_DIR: terraform
+  ARM_USE_OIDC: true
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    outputs:
+      plan-exitcode: ${{ steps.plan.outputs.exitcode }}
+      plan-output: ${{ steps.plan.outputs.stdout }}
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+        terraform_wrapper: false
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Terraform Format Check
+      id: fmt
+      working-directory: ${{ env.WORKING_DIR }}
+      run: terraform fmt -check -recursive
+      continue-on-error: true
+    
+    - name: Terraform Init
+      id: init
+      working-directory: ${{ env.WORKING_DIR }}
+      run: |
+        terraform init \
+          -backend-config="resource_group_name=${{ secrets.TF_STATE_RESOURCE_GROUP_NAME || 'terraform-state-rg' }}" \
+          -backend-config="storage_account_name=${{ secrets.TF_STATE_STORAGE_ACCOUNT_NAME || 'terraformstatedevops' }}" \
+          -backend-config="container_name=${{ secrets.TF_STATE_CONTAINER_NAME || 'tfstate' }}" \
+          -backend-config="key=devops-microservice.tfstate"
+      env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+    
+    - name: Terraform Validate
+      id: validate
+      working-directory: ${{ env.WORKING_DIR }}
+      run: terraform validate -no-color
+    
+    - name: Terraform Plan
+      id: plan
+      working-directory: ${{ env.WORKING_DIR }}
+      run: |
+        if [[ "${{ github.event.inputs.destroy }}" == "true" ]]; then
+          terraform plan -destroy -no-color -out=tfplan
+        else
+          terraform plan -no-color -out=tfplan
+        fi
+      env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      continue-on-error: true
+    
+    - name: Upload Plan Artifact
+      uses: actions/upload-artifact@v4
+      if: steps.plan.outcome == 'success'
+      with:
+        name: terraform-plan
+        path: ${{ env.WORKING_DIR }}/tfplan
+        retention-days: 5
+    
+    - name: Comment PR with Plan
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+          #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+          #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+          #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+          
+          <details><summary>Show Plan Output</summary>
+          
+          \`\`\`terraform
+          ${{ steps.plan.outputs.stdout }}
+          \`\`\`
+          
+          </details>
+          
+          *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          })
+    
+    - name: Plan Status Check
+      if: steps.plan.outcome == 'failure'
+      run: exit 1
+
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    if: |
+      github.ref == 'refs/heads/main' && 
+      github.event_name != 'pull_request' &&
+      needs.terraform-plan.outputs.plan-exitcode == '0'
+    
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+        terraform_wrapper: false
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Download Plan Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: terraform-plan
+        path: ${{ env.WORKING_DIR }}
+    
+    - name: Terraform Init
+      working-directory: ${{ env.WORKING_DIR }}
+      run: |
+        terraform init \
+          -backend-config="resource_group_name=${{ secrets.TF_STATE_RESOURCE_GROUP_NAME || 'terraform-state-rg' }}" \
+          -backend-config="storage_account_name=${{ secrets.TF_STATE_STORAGE_ACCOUNT_NAME || 'terraformstatedevops' }}" \
+          -backend-config="container_name=${{ secrets.TF_STATE_CONTAINER_NAME || 'tfstate' }}" \
+          -backend-config="key=devops-microservice.tfstate"
+      env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+    
+    - name: Terraform Apply
+      id: apply
+      working-directory: ${{ env.WORKING_DIR }}
+      run: |
+        terraform apply -auto-approve tfplan
+        
+        # Capture outputs
+        echo "resource_group_name=$(terraform output -raw resource_group_name)" >> $GITHUB_OUTPUT
+        echo "aks_cluster_name=$(terraform output -raw aks_cluster_name)" >> $GITHUB_OUTPUT
+        echo "acr_login_server=$(terraform output -raw acr_login_server)" >> $GITHUB_OUTPUT
+        echo "apim_gateway_url=$(terraform output -raw apim_gateway_url)" >> $GITHUB_OUTPUT
+      env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+    
+    - name: Display Infrastructure Outputs
+      run: |
+        echo "## Infrastructure Deployment Completed ✅" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Deployed Resources:" >> $GITHUB_STEP_SUMMARY
+        echo "- **Resource Group**: ${{ steps.apply.outputs.resource_group_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **AKS Cluster**: ${{ steps.apply.outputs.aks_cluster_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **ACR Login Server**: ${{ steps.apply.outputs.acr_login_server }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **APIM Gateway URL**: ${{ steps.apply.outputs.apim_gateway_url }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
+        echo "1. Configure kubectl: \`az aks get-credentials --resource-group ${{ steps.apply.outputs.resource_group_name }} --name ${{ steps.apply.outputs.aks_cluster_name }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "2. Deploy application manifests: \`kubectl apply -f k8s/\`" >> $GITHUB_STEP_SUMMARY
+        echo "3. Build and push container image to ACR" >> $GITHUB_STEP_SUMMARY
+    
+    - name: Configure kubectl
+      run: |
+        az aks get-credentials \
+          --resource-group ${{ steps.apply.outputs.resource_group_name }} \
+          --name ${{ steps.apply.outputs.aks_cluster_name }} \
+          --overwrite-existing
+    
+    - name: Verify AKS Connection
+      run: |
+        kubectl cluster-info
+        kubectl get nodes
+    
+    - name: Save Infrastructure Outputs
+      run: |
+        cat > infrastructure-outputs.json << EOF
+        {
+          "resource_group_name": "${{ steps.apply.outputs.resource_group_name }}",
+          "aks_cluster_name": "${{ steps.apply.outputs.aks_cluster_name }}",
+          "acr_login_server": "${{ steps.apply.outputs.acr_login_server }}",
+          "apim_gateway_url": "${{ steps.apply.outputs.apim_gateway_url }}",
+          "deployed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        }
+        EOF
+    
+    - name: Upload Infrastructure Outputs
+      uses: actions/upload-artifact@v4
+      with:
+        name: infrastructure-outputs
+        path: infrastructure-outputs.json
+        retention-days: 30
+
+  terraform-destroy:
+    name: Terraform Destroy
+    runs-on: ubuntu-latest
+    if: github.event.inputs.destroy == 'true' && github.ref == 'refs/heads/main'
+    
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+        terraform_wrapper: false
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Terraform Init
+      working-directory: ${{ env.WORKING_DIR }}
+      run: |
+        terraform init \
+          -backend-config="resource_group_name=${{ secrets.TF_STATE_RESOURCE_GROUP_NAME || 'terraform-state-rg' }}" \
+          -backend-config="storage_account_name=${{ secrets.TF_STATE_STORAGE_ACCOUNT_NAME || 'terraformstatedevops' }}" \
+          -backend-config="container_name=${{ secrets.TF_STATE_CONTAINER_NAME || 'tfstate' }}" \
+          -backend-config="key=devops-microservice.tfstate"
+      env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+    
+    - name: Terraform Destroy
+      working-directory: ${{ env.WORKING_DIR }}
+      run: terraform destroy -auto-approve
+      env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+    
+    - name: Destroy Summary
+      run: |
+        echo "## Infrastructure Destroyed 🗑️" >> $GITHUB_STEP_SUMMARY
+        echo "All Azure resources have been successfully destroyed." >> $GITHUB_STEP_SUMMARY
