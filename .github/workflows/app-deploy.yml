@@ -132,7 +132,8 @@ jobs:
     
     - name: Login to Azure Container Registry
       run: |
-        az acr login --name ${{ secrets.ACR_LOGIN_SERVER }}
+        ACR_NAME=$(echo "${{ secrets.ACR_LOGIN_SERVER }}" | cut -d'.' -f1)
+        az acr login --name $ACR_NAME
     
     - name: Extract Metadata
       id: meta
