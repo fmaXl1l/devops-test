@@ -165,13 +165,15 @@ jobs:
     
     - name: Generate SBOM
       uses: anchore/sbom-action@v0
+      continue-on-error: true
       with:
-        image: ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        image: ${{ steps.meta.outputs.tags }}
         format: spdx-json
         output-file: sbom.spdx.json
     
     - name: Upload SBOM
       uses: actions/upload-artifact@v4
+      continue-on-error: true
       with:
         name: sbom
         path: sbom.spdx.json
