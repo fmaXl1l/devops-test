@@ -11,7 +11,7 @@ from .auth import validate_api_key, validate_jwt_token
 # Application configuration
 app = FastAPI(
     title="DevOps Microservice", 
-    version="1.0.0",
+    version="1.0.1",
     description="A secure microservice for DevOps operations with JWT authentication"
 )
 
