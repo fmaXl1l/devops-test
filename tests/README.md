@@ -1,24 +1,19 @@
-# Test Suite
+# Tests
 
-## Estructura
-- `test_unit.py` - Tests unitarios (JWT, validaciones, formatos)
-- `test_integration.py` - Tests de integración (endpoints completos)
-- `conftest.py` - Fixtures compartidos
-
-## Ejecutar Tests
-
+## Run Tests
 ```bash
-# Todos los tests
+# All tests
 pytest
 
-# Con coverage (mínimo 90%)
+# With coverage
 pytest --cov=src
 
-# Tests específicos
+# Specific tests
 pytest tests/test_unit.py
 pytest tests/test_integration.py
 ```
 
-## Coverage
-- Mínimo requerido: 90%
-- Reporte HTML: `htmlcov/index.html`
+## Test Files
+- `test_unit.py` - Unit tests
+- `test_integration.py` - Integration tests
+- `conftest.py` - Shared fixtures

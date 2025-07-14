@@ -1,21 +1,21 @@
-# Terraform Azure Infrastructure
+# Terraform Infrastructure
 
-Infraestructura para microservicio DevOps: AKS, ACR, APIM.
-
-## Uso
-
+## Deploy
 ```bash
-# 1. Copiar variables
-cp terraform.tfvars.example terraform.tfvars
-
-# 2. Desplegar
 terraform init
 terraform plan
 terraform apply
 ```
 
+## Resources Created
+- AKS cluster
+- Azure Container Registry
+- API Management
+- VNet + Subnets
+- Network Security Groups
+
 ## Outputs
-- `aks_cluster_name` - Nombre cluster AKS
-- `acr_login_server` - URL registry ACR  
-- `apim_gateway_url` - URL gateway APIM
-- `resource_group_name` - Nombre resource group
+- `aks_cluster_name`
+- `acr_login_server`
+- `apim_gateway_url`
+- `resource_group_name`
