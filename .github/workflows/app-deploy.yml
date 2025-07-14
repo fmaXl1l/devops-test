@@ -27,6 +27,10 @@ env:
   IMAGE_NAME: devops-microservice
   NAMESPACE: devops-microservice
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   test:
     name: Test & Lint
