@@ -1,0 +1,22 @@
+{
+    "test_summary": {
+        "total_tests": 11,
+        "passed": 10,
+        "failed": 1,
+        "success_rate": "90.90%",
+        "timestamp": "2025-07-14T13:18:13Z"
+    },
+    "test_results": [
+{"test": "Health Check", "result": "PASS", "details": "Service is healthy", "timestamp": "2025-07-14T13:18:07Z"},
+{"test": "Generate JWT Token", "result": "PASS", "details": "JWT token generated successfully", "timestamp": "2025-07-14T13:18:07Z"},
+{"test": "DevOps Valid Request", "result": "PASS", "details": "Message processed successfully", "timestamp": "2025-07-14T13:18:07Z"},
+{"test": "DevOps No API Key", "result": "FAIL", "details": "Expected 401, got HTTP 422", "timestamp": "2025-07-14T13:18:08Z"},
+{"test": "DevOps Invalid JWT", "result": "PASS", "details": "Correctly rejected request with invalid JWT", "timestamp": "2025-07-14T13:18:08Z"},
+{"test": "HTTP GET Method", "result": "PASS", "details": "Correctly returned ERROR with 404", "timestamp": "2025-07-14T13:18:08Z"},
+{"test": "HTTP PUT Method", "result": "PASS", "details": "Correctly returned ERROR with 404", "timestamp": "2025-07-14T13:18:08Z"},
+{"test": "HTTP DELETE Method", "result": "PASS", "details": "Correctly returned ERROR with 404", "timestamp": "2025-07-14T13:18:09Z"},
+{"test": "HTTP PATCH Method", "result": "PASS", "details": "Correctly returned ERROR with 404", "timestamp": "2025-07-14T13:18:09Z"},
+{"test": "Load Balancing", "result": "PASS", "details": "10/10 requests successful (100%)", "timestamp": "2025-07-14T13:18:13Z"},
+{"test": "Concurrent Requests", "result": "PASS", "details": "All 5 concurrent requests successful", "timestamp": "2025-07-14T13:18:13Z"}
+    ]
+}

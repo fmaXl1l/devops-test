@@ -7,10 +7,10 @@ metadata:
     app: devops-microservice
     component: service
   annotations:
-    # Service is now internal - APIM handles external access
-    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    # External LoadBalancer for public access
+    service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: "/health"
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   ports:
   - name: http
     port: 8000
