@@ -276,7 +276,6 @@ jobs:
         done
         
         if [[ -z "$EXTERNAL_IP" ]]; then
-          echo "health-check-success=false" >> $GITHUB_OUTPUT
           echo "Service is ClusterIP, skipping external IP check"
           echo "health-check-success=true" >> $GITHUB_OUTPUT
           exit 0
