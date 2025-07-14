@@ -160,7 +160,12 @@ jobs:
     
     - name: Terraform Init
       working-directory: ${{ env.WORKING_DIR }}
-      run: terraform init
+      run: |
+        terraform init \
+          -backend-config="resource_group_name=terraform-state-rg" \
+          -backend-config="storage_account_name=tfstate6b99ba61" \
+          -backend-config="container_name=tfstate" \
+          -backend-config="key=devops-microservice.tfstate"
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -253,7 +258,12 @@ jobs:
     
     - name: Terraform Init
       working-directory: ${{ env.WORKING_DIR }}
-      run: terraform init
+      run: |
+        terraform init \
+          -backend-config="resource_group_name=terraform-state-rg" \
+          -backend-config="storage_account_name=tfstate6b99ba61" \
+          -backend-config="container_name=tfstate" \
+          -backend-config="key=devops-microservice.tfstate"
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
